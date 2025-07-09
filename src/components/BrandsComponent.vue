@@ -1,4 +1,3 @@
-<!-- filepath: c:\Users\Julian\Documents\workspace\vue-ecommerce-app\src\components\BrandManageComponent.vue -->
 <template>
     <div class="p-6">
         <!-- Listado -->
@@ -33,13 +32,19 @@
                         <td class="py-2 px-4 border-b text-xs">{{ formatDate(marca.updated_at) }}</td>
                         <td class="py-2 px-4 border-b flex gap-2">
                             <button @click="openEditForm(idx)"
-                                class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">Editar</button>
+                                class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">
+                                Editar
+                            </button>
                             <button @click="deleteMarca(idx)"
-                                class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Eliminar</button>
+                                class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">
+                                Eliminar
+                            </button>
                         </td>
                     </tr>
                     <tr v-if="marcas.length === 0">
-                        <td colspan="6" class="py-4 text-center text-gray-400">No hay marcas</td>
+                        <td colspan="6" class="py-4 text-center text-gray-400">
+                            No hay marcas
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -47,7 +52,9 @@
 
         <!-- Formulario -->
         <div v-else class="max-w-lg mx-auto bg-white p-6 rounded shadow-lg overflow-y-auto" style="max-height: 80vh;">
-            <h3 class="text-xl font-bold mb-4">{{ editIndex === null ? 'Crear Marca' : 'Editar Marca' }}</h3>
+            <h3 class="text-xl font-bold mb-4">
+                {{ editIndex === null ? 'Crear Marca' : 'Editar Marca' }}
+            </h3>
             <form @submit.prevent="saveMarca" class="space-y-3">
                 <div>
                     <label class="block text-sm font-medium">Nombre</label>
@@ -58,8 +65,9 @@
                     <input v-model="form.descripcion" type="text" class="input" required />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium">Banner (Imagen)</label>
-                    <input type="file" accept="image/*" class="input" @change="onImageChange" />
+                    <label class="block text-sm font-medium">URL del Banner</label>
+                    <input v-model="form.banner" type="text" class="input"
+                        placeholder="https://tuservidor.com/imagen.jpg" />
                     <div v-if="form.banner" class="mt-2">
                         <img :src="form.banner" alt="Vista previa" class="w-24 h-24 object-cover rounded" />
                     </div>
@@ -79,31 +87,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import api from '@/plugins/axios.js'
+
+const apiEndpoint = 'marcas/'
 
 const showForm = ref(false)
 const marcas = ref([])
 const editIndex = ref(null)
-let nextId = 1
 
 const initialForm = {
     id: null,
     nombre: '',
     descripcion: '',
-    banner: null,
+    banner: '',
     created_at: null,
     updated_at: null
 }
 const form = ref({ ...initialForm })
 
-function onImageChange(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (event) => {
-        form.value.banner = event.target.result
+onMounted(fetchMarcas)
+
+async function fetchMarcas() {
+    try {
+        const response = await api.get(apiEndpoint)
+        marcas.value = response.data
+    } catch (error) {
+        console.error('Error al cargar marcas:', error)
+        alert('Error al cargar marcas.')
     }
-    reader.readAsDataURL(file)
 }
 
 function openCreateForm() {
@@ -118,25 +130,34 @@ function openEditForm(idx) {
     showForm.value = true
 }
 
-function saveMarca() {
-    const now = new Date().toISOString()
-    if (editIndex.value === null) {
-        form.value.id = nextId++
-        form.value.created_at = now
-        form.value.updated_at = now
-        marcas.value.push({ ...form.value })
-    } else {
-        form.value.updated_at = now
-        marcas.value[editIndex.value] = { ...form.value }
+async function saveMarca() {
+    try {
+        if (editIndex.value === null) {
+            const response = await api.post(apiEndpoint, form.value)
+            marcas.value.push(response.data)
+        } else {
+            const id = form.value.id
+            const response = await api.put(`${apiEndpoint}${id}/`, form.value)
+            marcas.value[editIndex.value] = response.data
+        }
+        showForm.value = false
+        form.value = { ...initialForm }
+        editIndex.value = null
+    } catch (error) {
+        console.error('Error al guardar marca:', error)
+        alert('Error al guardar marca.')
     }
-    showForm.value = false
-    form.value = { ...initialForm }
-    editIndex.value = null
 }
 
-function deleteMarca(idx) {
-    if (confirm('¿Seguro que deseas eliminar esta marca?')) {
+async function deleteMarca(idx) {
+    if (!confirm('¿Seguro que deseas eliminar esta marca?')) return
+    try {
+        const id = marcas.value[idx].id
+        await api.delete(`${apiEndpoint}${id}/`)
         marcas.value.splice(idx, 1)
+    } catch (error) {
+        console.error('Error al eliminar marca:', error)
+        alert('Error al eliminar marca.')
     }
 }
 
@@ -157,4 +178,4 @@ function formatDate(dateStr) {
 .input {
     @apply w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400;
 }
-</style>s
+</style>

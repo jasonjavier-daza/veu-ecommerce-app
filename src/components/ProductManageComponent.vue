@@ -1,7 +1,6 @@
-<!-- filepath: c:\Users\Julian\Documents\workspace\vue-ecommerce-app\src\components\ProductManageComponent.vue -->
 <template>
   <div class="p-6">
-    <!-- Listado -->
+    <!-- Listado de productos -->
     <div v-if="!showForm">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Listado de Productos</h2>
@@ -12,18 +11,18 @@
       <table class="min-w-full bg-white shadow rounded mb-6">
         <thead>
           <tr>
-            <th class="py-2 px-4 border-b">Miniatura</th>
+            <th class="py-2 px-4 border-b">Imagen</th>
             <th class="py-2 px-4 border-b">Título</th>
-            <th class="py-2 px-4 border-b">Precio Ahora</th>
+            <th class="py-2 px-4 border-b">Precio</th>
             <th class="py-2 px-4 border-b">Stock</th>
             <th class="py-2 px-4 border-b">Estado</th>
             <th class="py-2 px-4 border-b">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(prod, idx) in products" :key="idx">
+          <tr v-for="(prod, idx) in products" :key="prod.id || idx">
             <td class="py-2 px-4 border-b">
-              <img v-if="prod.poster" :src="prod.poster" alt="Miniatura" class="w-16 h-16 object-cover rounded" />
+              <img v-if="prod.poster" :src="prod.poster" alt="Imagen" class="w-16 h-16 object-cover rounded" />
               <span v-else class="text-gray-400">Sin imagen</span>
             </td>
             <td class="py-2 px-4 border-b">{{ prod.titulo }}</td>
@@ -31,14 +30,18 @@
             <td class="py-2 px-4 border-b">{{ prod.stock }}</td>
             <td class="py-2 px-4 border-b">{{ prod.status }}</td>
             <td class="py-2 px-4 border-b flex gap-2">
-              <button @click="openEditForm(idx)"
-                class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">Editar</button>
-              <button @click="deleteProduct(idx)"
-                class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Eliminar</button>
+              <button @click="openEditForm(idx)" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
+                Editar
+              </button>
+              <button @click="deleteProduct(idx)" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">
+                Eliminar
+              </button>
             </td>
           </tr>
           <tr v-if="products.length === 0">
-            <td colspan="6" class="py-4 text-center text-gray-400">No hay productos</td>
+            <td colspan="6" class="py-4 text-center text-gray-400">
+              No hay productos
+            </td>
           </tr>
         </tbody>
       </table>
@@ -46,24 +49,35 @@
 
     <!-- Formulario -->
     <div v-else class="max-w-lg mx-auto bg-white p-6 rounded shadow-lg overflow-y-auto" style="max-height: 80vh;">
-      <h3 class="text-xl font-bold mb-4">{{ editIndex === null ? 'Crear Producto' : 'Editar Producto' }}</h3>
+      <h3 class="text-xl font-bold mb-4">
+        {{ editIndex === null ? "Crear Producto" : "Editar Producto" }}
+      </h3>
       <form @submit.prevent="saveProduct" class="space-y-3">
-        <!-- ...otros campos... -->
         <div>
-          <label class="block text-sm font-medium">Poster (Imagen)</label>
-          <input type="file" accept="image/*" class="input" @change="onImageChange" />
+          <label class="block text-sm font-medium">URL de la Imagen</label>
+          <input v-model="form.poster" type="url" placeholder="https://..." class="input" />
           <div v-if="form.poster" class="mt-2">
             <img :src="form.poster" alt="Vista previa" class="w-24 h-24 object-cover rounded" />
           </div>
         </div>
         <div class="flex gap-2">
           <div class="flex-1">
-            <label class="block text-sm font-medium">Categoría ID</label>
-            <input v-model.number="form.categoria_id" type="number" class="input" required />
+            <label class="block text-sm font-medium">Categoría</label>
+            <select v-model.number="form.categoria_id" class="input" required>
+              <option disabled value="">Seleccione</option>
+              <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
+                {{ cat.nombre }}
+              </option>
+            </select>
           </div>
           <div class="flex-1">
-            <label class="block text-sm font-medium">Marca ID</label>
-            <input v-model.number="form.marca_id" type="number" class="input" required />
+            <label class="block text-sm font-medium">Marca</label>
+            <select v-model.number="form.marca_id" class="input" required>
+              <option disabled value="">Seleccione</option>
+              <option v-for="mar in marcas" :key="mar.id" :value="mar.id">
+                {{ mar.nombre }}
+              </option>
+            </select>
           </div>
         </div>
         <div>
@@ -76,12 +90,12 @@
         </div>
         <div class="flex gap-2">
           <div class="flex-1">
-            <label class="block text-sm font-medium">Precio Ahora</label>
+            <label class="block text-sm font-medium">Precio Actual</label>
             <input v-model.number="form.precio_ahora" type="number" class="input" required />
           </div>
           <div class="flex-1">
             <label class="block text-sm font-medium">Precio Antes</label>
-            <input v-model.number="form.precio_antes" type="number" class="input" required />
+            <input v-model.number="form.precio_antes" type="number" class="input" />
           </div>
         </div>
         <div>
@@ -119,10 +133,10 @@
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium">Status</label>
+          <label class="block text-sm font-medium">Estado</label>
           <select v-model="form.status" class="input">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Active">Activo</option>
+            <option value="Inactive">Inactivo</option>
           </select>
         </div>
         <div class="flex gap-2 mt-4">
@@ -140,76 +154,94 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from "vue";
+import api from "@/plugins/axios.js";
 
-const showForm = ref(false)
-const products = ref([])
-const editIndex = ref(null)
+const showForm = ref(false);
+const products = ref([]);
+const categorias = ref([]);
+const marcas = ref([]);
+const editIndex = ref(null);
 
 const initialForm = {
-  categoria_id: 1,
-  marca_id: 3,
-  titulo: '',
-  slug: '',
-  poster: '',
+  categoria_id: "",
+  marca_id: "",
+  titulo: "",
+  slug: "",
+  poster: "",
   precio_ahora: 0,
   precio_antes: 0,
-  video_review: '',
-  info_short: '',
-  detalle: '',
+  video_review: "",
+  info_short: "",
+  detalle: "",
   stock: 0,
-  subcategoria: '',
-  nombre_selector: '',
+  subcategoria: "",
+  nombre_selector: "",
   stars: 0,
   ventas: 0,
-  status: 'Active'
-}
-const form = ref({ ...initialForm })
+  status: "Active",
+};
 
-function onImageChange(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    form.value.poster = event.target.result
+const form = ref({ ...initialForm });
+
+async function fetchCategorias() {
+  const { data } = await api.get("categorias/");
+  categorias.value = data;
+}
+
+async function fetchMarcas() {
+  const { data } = await api.get("marcas/");
+  marcas.value = data;
+}
+
+async function fetchProductos() {
+  const { data } = await api.get("productos/");
+  products.value = data;
+}
+
+async function saveProduct() {
+  if (editIndex.value === null) {
+    await api.post("productos/", form.value);
+  } else {
+    const id = products.value[editIndex.value].id;
+    await api.put(`productos/${id}/`, form.value);
   }
-  reader.readAsDataURL(file)
+  await fetchProductos();
+  cancelForm();
+}
+
+async function deleteProduct(idx) {
+  const producto = products.value[idx];
+  if (!producto?.id) return;
+  if (confirm("¿Seguro que deseas eliminar este producto?")) {
+    await api.delete(`productos/${producto.id}/`);
+    await fetchProductos();
+  }
 }
 
 function openCreateForm() {
-  editIndex.value = null
-  form.value = { ...initialForm }
-  showForm.value = true
+  editIndex.value = null;
+  form.value = { ...initialForm };
+  showForm.value = true;
 }
 
 function openEditForm(idx) {
-  editIndex.value = idx
-  form.value = { ...products.value[idx] }
-  showForm.value = true
-}
-
-function saveProduct() {
-  if (editIndex.value === null) {
-    products.value.push({ ...form.value })
-  } else {
-    products.value[editIndex.value] = { ...form.value }
-  }
-  showForm.value = false
-  form.value = { ...initialForm }
-  editIndex.value = null
-}
-
-function deleteProduct(idx) {
-  if (confirm('¿Seguro que deseas eliminar este producto?')) {
-    products.value.splice(idx, 1)
-  }
+  editIndex.value = idx;
+  form.value = { ...products.value[idx] };
+  showForm.value = true;
 }
 
 function cancelForm() {
-  showForm.value = false
-  form.value = { ...initialForm }
-  editIndex.value = null
+  showForm.value = false;
+  form.value = { ...initialForm };
+  editIndex.value = null;
 }
+
+onMounted(() => {
+  fetchCategorias();
+  fetchMarcas();
+  fetchProductos();
+});
 </script>
 
 <style scoped>
