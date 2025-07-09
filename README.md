@@ -1,6 +1,24 @@
+
+
 # Vue E-commerce App
 
-This is a Vue.js e-commerce application that allows users to browse products, manage their cart, and complete purchases. The application also includes user authentication, profile management, and an admin dashboard for managing products and orders.
+In this first version, the administrative part of the e-commerce site is being implemented. The main objective is to have an administration panel that allows you to manage all the information necessary for the store's operation.
+
+The main features included are:
+
+Product Management:
+Create, edit, list, and delete products that will be available in the store.
+
+Brand Management:
+Manage the brands to which the products belong.
+
+Category Management:
+Organize products into categories for easier navigation.
+
+User Management:
+Control which users have access to the administrative panel.
+
+These sections lay the foundation for the application, allowing for the subsequent implementation of the public part of the store, where customers can view and purchase products.
 
 ## Project Structure
 
@@ -24,16 +42,13 @@ vue-ecommerce-app
 
 - **User Authentication**: Users can register and log in to their accounts.
 - **Product Browsing**: Users can view a list of products and detailed information about each product.
-- **Shopping Cart**: Users can add products to their cart, modify quantities, and remove items.
-- **Checkout Process**: Users can enter shipping information and confirm their orders.
 - **User Profile Management**: Users can view and update their personal information and view order history.
-- **Admin Dashboard**: Admins can manage users, products, and orders.
 
 ## Installation
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/jasonjavier-daza/veu-ecommerce-app.git
    ```
 
 2. Navigate to the project directory:
@@ -59,6 +74,7 @@ vue-ecommerce-app
 - Vue Router
 - Vuex
 - Tailwind CSS
+- flowbite-vue
 - Vite
 
 ## Contributing
