@@ -1,15 +1,15 @@
 <template>
   <div class="container mx-auto p-4">
-    <CartComponent />
+    <TrackingComponent />
   </div>
 </template>
 
 <script>
-import CartComponent from '@/components/CartComponent.vue';
+import TrackingComponent from '@/components/TrackingComponent.vue';
 
 export default {
   components: {
-    CartComponent
+    TrackingComponent
   }
 }
 </script>

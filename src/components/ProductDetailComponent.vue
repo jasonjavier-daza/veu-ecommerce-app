@@ -1,36 +1,61 @@
 <template>
-  <div class="max-w-2xl mx-auto p-4">
-    <div class="flex flex-col md:flex-row">
-      <img :src="product.image" alt="Product Image" class="w-full md:w-1/2 h-auto object-cover mb-4 md:mb-0" />
-      <div class="md:ml-4">
-        <h1 class="text-2xl font-bold mb-2">{{ product.name }}</h1>
-        <p class="text-lg text-gray-700 mb-4">{{ product.description }}</p>
-        <p class="text-xl font-semibold mb-4">${{ product.price.toFixed(2) }}</p>
-        <button @click="addToCart" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-          Add to Cart
-        </button>
-      </div>
+  <div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">Detalle de Orden</h1>
+
+    <div v-if="loading">Cargando datos...</div>
+
+    <div v-else-if="!order">No se encontró la orden.</div>
+
+    <div v-else class="space-y-4 bg-white shadow p-6 rounded-lg">
+      <p><strong>Orden ID:</strong> {{ order.id }}</p>
+      <p><strong>Fecha:</strong> {{ formatDate(order.created_at) }}</p>
+      <p><strong>Cliente:</strong> {{ order.user?.first_name }} {{ order.user?.last_name }}</p>
+      <p><strong>Total:</strong> ${{ order.total.toFixed(2) }}</p>
+      <p><strong>Estado:</strong> {{ order.status }}</p>
+
+      <h2 class="text-xl font-semibold mt-4">Productos</h2>
+      <ul class="border-t mt-2 pt-2 space-y-2">
+        <li v-for="item in order.items" :key="item.id" class="border-b pb-2">
+          {{ item.product_name }} - {{ item.quantity }} x ${{ item.price }}
+        </li>
+      </ul>
+
+      <router-link to="/admin/order-history" class="inline-block mt-4 text-blue-500 hover:underline">
+        ← Volver al listado
+      </router-link>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    product: {
-      type: Object,
-      required: true
-    }
-  },
-  methods: {
-    addToCart() {
-      // Logic to add the product to the cart
-      this.$emit('add-to-cart', this.product);
-    }
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import api from '@/plugins/axios'
+
+const route = useRoute()
+const orderId = route.params.id
+
+const loading = ref(false)
+const order = ref(null)
+
+function formatDate(dateStr) {
+  const date = new Date(dateStr)
+  return date.toLocaleString()
+}
+
+async function fetchOrderDetails() {
+  loading.value = true
+  try {
+    const res = await api.get(`/orders/${orderId}/`)
+    order.value = res.data
+  } catch (error) {
+    console.error('Error cargando orden:', error)
+  } finally {
+    loading.value = false
   }
 }
-</script>
 
-<style scoped>
-/* Add any additional styles here if needed */
-</style>
+onMounted(() => {
+  fetchOrderDetails()
+})
+</script>

@@ -1,4 +1,3 @@
-<!-- filepath: c:\Users\Julian\Documents\workspace\vue-ecommerce-app\src\components\UserManageComponent.vue -->
 <template>
   <div class="p-6">
     <!-- Listado -->
@@ -9,6 +8,7 @@
           Crear Usuario
         </button>
       </div>
+
       <table class="min-w-full bg-white shadow rounded mb-6">
         <thead>
           <tr>
@@ -39,8 +39,8 @@
             <td class="py-2 px-4 border-b text-xs">{{ formatDate(user.created_at) }}</td>
             <td class="py-2 px-4 border-b text-xs">{{ formatDate(user.updated_at) }}</td>
             <td class="py-2 px-4 border-b flex gap-2">
-              <button @click="openEditForm(idx)" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">Editar</button>
-              <button @click="deleteUser(idx)" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Eliminar</button>
+              <button @click="openEditForm(user)" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">Editar</button>
+              <button @click="deleteUser(user.id)" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">Eliminar</button>
             </td>
           </tr>
           <tr v-if="users.length === 0">
@@ -52,55 +52,21 @@
 
     <!-- Formulario -->
     <div v-else class="max-w-lg mx-auto bg-white p-6 rounded shadow-lg overflow-y-auto" style="max-height: 80vh;">
-      <h3 class="text-xl font-bold mb-4">{{ editIndex === null ? 'Crear Usuario' : 'Editar Usuario' }}</h3>
+      <h3 class="text-xl font-bold mb-4">{{ form.id ? 'Editar Usuario' : 'Crear Usuario' }}</h3>
       <form @submit.prevent="saveUser" class="space-y-3">
-        <div>
-          <label class="block text-sm font-medium">Nombre</label>
-          <input v-model="form.first_name" type="text" class="input" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Apellido</label>
-          <input v-model="form.last_name" type="text" class="input" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Email</label>
-          <input v-model="form.email" type="email" class="input" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Contraseña</label>
-          <input v-model="form.password" type="password" class="input" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Rol</label>
-          <input v-model="form.role" type="text" class="input" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Perfil (Imagen)</label>
-          <input type="file" accept="image/*" class="input" @change="onImageChange" />
-          <div v-if="form.perfil" class="mt-2">
-            <img :src="form.perfil" alt="Vista previa" class="w-16 h-16 object-cover rounded-full" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Teléfono</label>
-          <input v-model="form.telefono" type="text" class="input" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">País</label>
-          <input v-model="form.pais" type="text" class="input" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Número de documento</label>
-          <input v-model="form.numdoc" type="text" class="input" />
-        </div>
+        <div><label class="block text-sm font-medium">Nombre</label><input v-model="form.first_name" type="text" class="input" required /></div>
+        <div><label class="block text-sm font-medium">Apellido</label><input v-model="form.last_name" type="text" class="input" required /></div>
+        <div><label class="block text-sm font-medium">Email</label><input v-model="form.email" type="email" class="input" required /></div>
+        <div><label class="block text-sm font-medium">Contraseña</label><input v-model="form.password" type="password" class="input" :required="!form.id" /></div>
+        <div><label class="block text-sm font-medium">Rol</label><input v-model="form.role" type="text" class="input bg-gray-100" readonly/></div>
+        <div><label class="block text-sm font-medium">Perfil (URL o Base64)</label><input v-model="form.perfil" type="text" class="input" /></div>
+        <div><label class="block text-sm font-medium">Teléfono</label><input v-model="form.telefono" type="text" class="input" /></div>
+        <div><label class="block text-sm font-medium">País</label><input v-model="form.pais" type="text" class="input" /></div>
+        <div><label class="block text-sm font-medium">Número de documento</label><input v-model="form.numdoc" type="text" class="input" /></div>
+
         <div class="flex gap-2 mt-4">
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">
-            Guardar
-          </button>
-          <button type="button" @click="cancelForm"
-            class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 w-full">
-            Cancelar
-          </button>
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Guardar</button>
+          <button type="button" @click="cancelForm" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 w-full">Cancelar</button>
         </div>
       </form>
     </div>
@@ -108,84 +74,69 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import api from '@/plugins/axios'
 
-const showForm = ref(false)
 const users = ref([])
-const editIndex = ref(null)
-let nextId = 1
+const form = ref({})
+const showForm = ref(false)
 
-const initialForm = {
-  id: null,
-  first_name: '',
-  last_name: '',
-  email: '',
-  password: '',
-  role: null,
-  perfil: null,
-  telefono: null,
-  pais: null,
-  numdoc: null,
-  created_at: null,
-  updated_at: null
-}
-const form = ref({ ...initialForm })
-
-function onImageChange(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    form.value.perfil = event.target.result
+const fetchUsers = async () => {
+  try {
+    const res = await api.get('/users/')
+    users.value = res.data
+  } catch (err) {
+    console.error('Error al cargar usuarios:', err)
   }
-  reader.readAsDataURL(file)
 }
 
-function openCreateForm() {
-  editIndex.value = null
-  form.value = { ...initialForm }
+const openCreateForm = () => {
+  form.value = { role: 'admin' }
   showForm.value = true
 }
 
-function openEditForm(idx) {
-  editIndex.value = idx
-  form.value = { ...users.value[idx] }
+const openEditForm = (user) => {
+  form.value = { ...user }
   showForm.value = true
 }
 
-function saveUser() {
-  const now = new Date().toISOString()
-  if (editIndex.value === null) {
-    form.value.id = nextId++
-    form.value.created_at = now
-    form.value.updated_at = now
-    users.value.push({ ...form.value })
-  } else {
-    form.value.updated_at = now
-    users.value[editIndex.value] = { ...form.value }
-  }
+const cancelForm = () => {
   showForm.value = false
-  form.value = { ...initialForm }
-  editIndex.value = null
+  form.value = {}
 }
 
-function deleteUser(idx) {
-  if (confirm('¿Seguro que deseas eliminar este usuario?')) {
-    users.value.splice(idx, 1)
+const saveUser = async () => {
+  try {
+    if (form.value.id) {
+      // EDITAR
+      await api.put(`/users/${form.value.id}/`, form.value)
+    } else {
+      // CREAR
+      await api.post('/users/', form.value)
+    }
+    await fetchUsers()
+    cancelForm()
+  } catch (err) {
+    console.error('Error al guardar usuario:', err.response?.data || err)
   }
 }
 
-function cancelForm() {
-  showForm.value = false
-  form.value = { ...initialForm }
-  editIndex.value = null
+const deleteUser = async (id) => {
+  if (!confirm('¿Eliminar este usuario?')) return
+  try {
+    await api.delete(`/users/${id}/`)
+    await fetchUsers()
+  } catch (err) {
+    console.error('Error al eliminar usuario:', err)
+  }
 }
 
-function formatDate(dateStr) {
+const formatDate = (dateStr) => {
   if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleString()
+  return new Date(dateStr).toLocaleString()
 }
+
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
